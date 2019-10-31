@@ -1,0 +1,48 @@
+--
+
+- name: Vmware guest inventory rename
+  hosts: localhost
+  gather_facts: no
+  vars:
+  tasks:
+
+     - name: Authenticating against the Vcenter
+       uri:
+         url: "https://{{ vcenter }}/rest/com/vmware/cis/session"
+         validate_certs: no
+         method: POST
+         user: "{{ username }}"
+         password: "{{ password }}"
+         force_basic_auth: yes
+         return_content: yes
+         status_code: 200
+       register: ses
+
+
+     - uri:
+          url: "https://{{ vcenter }}/rest/vcenter/datacenter"
+          validate_certs: no
+          method: GET
+          return_content: yes
+          headers:
+            Cookie: "{{ses.set_cookie}}"
+       register: listadc
+
+     - set_fact:
+         vm_dc: "{{ listadc.json.value[0].name }}"
+
+
+     - name: Getting vm properties
+       vmware_guest_facts:
+         hostname: "{{ vcenter }}"
+         username: "{{ username }}"
+         password: "{{ password }}"
+         validate_certs: no
+         datacenter: "{{ vm_dc }}"
+         name: "{{ vmname }}"
+       register: vmfact
+       when: listadc.json.value[0] is defined
+
+
+     - debug:
+        msg: "l'host che ospita la vm e' {{ vmfact.instance.hw_esxi_host }}"

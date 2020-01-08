@@ -1,0 +1,29 @@
+---
+- name: Rhel delivery
+  hosts: localhost
+  gather_facts: No
+  tasks:
+
+
+    - name: Cloning the vm
+      vmware_guest:
+        hostname: 172.19.167.170
+        username: virtosadmin
+        password: Password10
+        validate_certs: no
+        datacenter: DCS2_ITA
+        cluster: OPENSHIFT-DEV
+        datastore: OPENSHIFT-DEV
+        folder: "/DCS2_ITA/vm/DELIVERY_AUTOMATION/OPENSHIFT-DEV/TRAINING - OPENSHIFT-DEV/"
+        name: cavia
+        state: poweredon
+        template: RH75-clone
+        annotation: "Delivered by Ansible playbook"
+        networks:
+          - name: '1178 - 10.14.35.0%2f27 - BO-CLOUD-DEV'
+            device_type: vmxnet3
+            ip: 10.14.35.9
+            netmask: 255.255.255.224
+            gateway: 10.14.35.1
+            wait_for_ip_address: yes
+      delegate_to: localhost

@@ -1,0 +1,91 @@
+---
+
+# Tested on Vmware >= 6.5
+
+- name:  Vmware delivery via Ansible playbooks
+  hosts: localhost
+  gather_facts: No
+  tasks:
+
+    - name: Parsing the CSV
+      read_csv:
+        path: test.csv
+        delimiter: ";"
+      register: vms
+      delegate_to: localhost
+
+
+    - set_fact:
+        farm: "{{ vm.Farm }}"
+        cluster: "{{ vm.Cluster }}"
+      loop: "{{ vms.list }}"
+      loop_control:
+        loop_var: vm
+      no_log: true
+
+
+
+    - name: Authenticating against the Vcenter
+      uri:
+        url: "https://{{ farm }}/rest/com/vmware/cis/session"
+        validate_certs: no
+        method: POST
+        user: virtosadmin
+        password: Password10
+        force_basic_auth: yes
+        return_content: yes
+        status_code: 200
+      register: ses
+
+
+    - uri:
+        url: "https://{{ farm }}/rest/vcenter/datacenter"
+        validate_certs: no
+        method: GET
+        return_content: yes
+        status_code: 200
+        headers:
+          Cookie: "{{ ses.set_cookie }}"
+      register: prova
+
+
+    - debug:
+        var: prova
+
+    # CODICE PER UNO SOLO DATACENTER!!!
+    - debug:
+        var: item
+      loop: "{{ prova | json_query('json.value[*].datacenter')}}"
+
+
+#    - uri:
+#        url: "https://{{ farm }}/rest/vcenter/cluster?filter.datacenters={{ item }}"
+#        validate_certs: no
+#        method: GET
+#        return_content: yes
+#        headers:
+#          Cookie: "{{ ses.set_cookie }}"
+#      register: listadc
+#      loop: "{{ prova | json_query('json.value[*].datacenter')}}"
+
+
+#    - debug:
+#        var: listadc
+
+
+
+
+
+
+
+
+
+
+
+#    - uri:
+#        url: "https://{{ farm }}/rest/vcenter/cluster/{{ cluster }}"
+#        validate_certs: no
+#        method: GET
+#        return_content: yes
+#        headers:
+#          Cookie: "{{ ses.set_cookie }}"
